@@ -32,14 +32,34 @@ app.get('/health', (req, res) => {
   });
 });
 
-// Routes (with error handling)
+// Routes (with detailed error handling)
 try {
-  app.use('/api/cashfree', require('./routes/cashfree'));
-  app.use('/api/webhook', require('./routes/webhook'));
+  console.log('Loading cashfree routes...');
+  const cashfreeRoutes = require('./routes/cashfree');
+  app.use('/api/cashfree', cashfreeRoutes);
+  console.log('✅ Cashfree routes loaded successfully');
 } catch (error) {
-  console.error('Error loading routes:', error);
-  app.get('/api/*', (req, res) => {
-    res.status(500).json({ error: 'Routes not loaded properly' });
+  console.error('❌ Error loading cashfree routes:', error.message);
+  app.get('/api/cashfree/*', (req, res) => {
+    res.status(500).json({ 
+      error: 'Cashfree routes not loaded',
+      details: error.message 
+    });
+  });
+}
+
+try {
+  console.log('Loading webhook routes...');
+  const webhookRoutes = require('./routes/webhook');
+  app.use('/api/webhook', webhookRoutes);
+  console.log('✅ Webhook routes loaded successfully');
+} catch (error) {
+  console.error('❌ Error loading webhook routes:', error.message);
+  app.get('/api/webhook/*', (req, res) => {
+    res.status(500).json({ 
+      error: 'Webhook routes not loaded',
+      details: error.message 
+    });
   });
 }
 
