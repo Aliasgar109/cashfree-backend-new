@@ -1,8 +1,22 @@
 const express = require('express');
 const router = express.Router();
-const webhookController = require('../controllers/webhookController');
+
+// Test route
+router.get('/test', (req, res) => {
+  res.json({ message: 'Webhook routes working!' });
+});
 
 // Handle Cashfree webhook
-router.post('/cashfree', webhookController.handleCashfreeWebhook);
+router.post('/cashfree', (req, res) => {
+  try {
+    res.json({ 
+      success: true, 
+      message: 'Webhook endpoint reached',
+      body: req.body 
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
 
 module.exports = router;
