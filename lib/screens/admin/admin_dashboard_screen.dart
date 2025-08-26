@@ -23,7 +23,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   final SupabasePaymentService _paymentService = SupabasePaymentService();
   final SupabaseUserService _userService = SupabaseUserService();
   final AuthService _authService = AuthService();
-  
+
   PaymentStatistics? _statistics;
   bool _isLoadingStats = true;
   String? _currentAdminId;
@@ -38,7 +38,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     // Get current admin ID
     final currentUser = _authService.currentUser;
     _currentAdminId = currentUser?.uid;
-    
+
     await _loadStatistics();
   }
 
@@ -110,26 +110,27 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             child: ConstrainedBox(
               constraints: BoxConstraints(
                 maxWidth: AppConstants.maxContentWidth,
-                minHeight: MediaQuery.of(context).size.height - 
-                    AppBar().preferredSize.height - 
-                    MediaQuery.of(context).padding.top - 
+                minHeight:
+                    MediaQuery.of(context).size.height -
+                    AppBar().preferredSize.height -
+                    MediaQuery.of(context).padding.top -
                     AppConstants.defaultPadding * 2,
               ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Statistics Overview
-              _buildStatisticsSection(l10n, theme),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Statistics Overview
+                  _buildStatisticsSection(l10n, theme),
                   SizedBox(height: AppConstants.defaultPadding),
-              
-              // Pending Payments Queue
-              _buildPendingPaymentsSection(l10n, theme),
+
+                  // Pending Payments Queue
+                  _buildPendingPaymentsSection(l10n, theme),
                   SizedBox(height: AppConstants.defaultPadding),
-              
-              // Quick Actions
-              _buildQuickActionsSection(l10n, theme),
+
+                  // Quick Actions
+                  _buildQuickActionsSection(l10n, theme),
                   SizedBox(height: AppConstants.largePadding),
-            ],
+                ],
               ),
             ),
           ),
@@ -181,10 +182,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   Widget _buildStatisticsGrid(AppLocalizations l10n, ThemeData theme) {
     final stats = _statistics!;
     final screenWidth = MediaQuery.of(context).size.width;
-    final crossAxisCount = screenWidth > AppConstants.tabletBreakpoint 
-        ? AppConstants.gridCrossAxisCountTablet 
+    final crossAxisCount = screenWidth > AppConstants.tabletBreakpoint
+        ? AppConstants.gridCrossAxisCountTablet
         : AppConstants.gridCrossAxisCountMobile;
-    
+
     return GridView.count(
       crossAxisCount: crossAxisCount,
       shrinkWrap: true,
@@ -251,25 +252,25 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           // Header row with icon and title
           Flexible(
             child: Row(
-            children: [
+              children: [
                 Icon(icon, color: color, size: 18),
                 SizedBox(width: AppConstants.smallPadding),
-              Expanded(
-                child: Text(
-                  title,
+                Expanded(
+                  child: Text(
+                    title,
                     style: theme.textTheme.bodySmall?.copyWith(
-                    color: color,
-                    fontWeight: FontWeight.w600,
+                      color: color,
+                      fontWeight: FontWeight.w600,
                       fontSize: 11,
-                  ),
-                  overflow: TextOverflow.ellipsis,
+                    ),
+                    overflow: TextOverflow.ellipsis,
                     maxLines: 1,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-          ),
-          
+
           // Main value - with flexible sizing
           Flexible(
             flex: 2,
@@ -277,10 +278,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               child: FittedBox(
                 fit: BoxFit.scaleDown,
                 child: Text(
-            value,
+                  value,
                   style: theme.textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: color,
+                    fontWeight: FontWeight.bold,
+                    color: color,
                     height: 1.0,
                   ),
                   textAlign: TextAlign.center,
@@ -288,14 +289,14 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               ),
             ),
           ),
-          
+
           // Subtitle
           Flexible(
             child: Center(
               child: Text(
-            subtitle,
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: color.withOpacity(0.8),
+                subtitle,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: color.withOpacity(0.8),
                   fontSize: 10,
                 ),
                 overflow: TextOverflow.ellipsis,
@@ -324,8 +325,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 Expanded(
                   child: Text(
                     AppConstants.pendingApprovals,
-                  style: theme.textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
+                    style: theme.textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
                     ),
                     overflow: TextOverflow.ellipsis,
                     maxLines: 1,
@@ -348,7 +349,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             ),
             SizedBox(height: AppConstants.defaultPadding),
             StreamBuilder<List<PaymentModel>>(
-              stream: _paymentService.getPaymentsByStatus(PaymentStatus.PENDING),
+              stream: _paymentService.getPaymentsByStatus(
+                PaymentStatus.PENDING,
+              ),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return Center(
@@ -392,7 +395,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                           Text(
                             AppConstants.allPaymentsUpToDate,
                             style: theme.textTheme.bodyMedium?.copyWith(
-                              color: theme.colorScheme.onSurface.withOpacity(0.6),
+                              color: theme.colorScheme.onSurface.withOpacity(
+                                0.6,
+                              ),
                             ),
                           ),
                         ],
@@ -406,11 +411,15 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
                 return Column(
                   children: [
-                    ...displayPayments.map((payment) => 
-                      _buildPendingPaymentCard(payment, l10n, theme)),
+                    ...displayPayments.map(
+                      (payment) =>
+                          _buildPendingPaymentCard(payment, l10n, theme),
+                    ),
                     if (pendingPayments.length > 3)
                       Padding(
-                        padding: EdgeInsets.only(top: AppConstants.smallPadding),
+                        padding: EdgeInsets.only(
+                          top: AppConstants.smallPadding,
+                        ),
                         child: Text(
                           '+${pendingPayments.length - 3} ${AppConstants.morePendingPayments}',
                           style: theme.textTheme.bodyMedium?.copyWith(
@@ -428,12 +437,16 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     );
   }
 
-  Widget _buildPendingPaymentCard(PaymentModel payment, AppLocalizations l10n, ThemeData theme) {
+  Widget _buildPendingPaymentCard(
+    PaymentModel payment,
+    AppLocalizations l10n,
+    ThemeData theme,
+  ) {
     return FutureBuilder<UserModel?>(
       future: _userService.getUserById(payment.userId),
       builder: (context, userSnapshot) {
         final user = userSnapshot.data;
-        
+
         return Card(
           margin: EdgeInsets.only(bottom: AppConstants.smallPadding),
           elevation: AppConstants.cardElevation,
@@ -474,46 +487,47 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             trailing: SizedBox(
               width: 80,
               child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text(
-                  _formatDate(payment.createdAt),
-                  style: theme.textTheme.bodySmall,
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    _formatDate(payment.createdAt),
+                    style: theme.textTheme.bodySmall,
                     overflow: TextOverflow.ellipsis,
                     maxLines: 1,
-                ),
+                  ),
                   SizedBox(height: AppConstants.smallPadding / 2),
-                Container(
+                  Container(
                     padding: EdgeInsets.symmetric(
-                      horizontal: AppConstants.smallPadding, 
+                      horizontal: AppConstants.smallPadding,
                       vertical: 2,
                     ),
-                  decoration: BoxDecoration(
-                    color: Colors.orange.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(AppConstants.largeBorderRadius),
-                  ),
-                  child: Text(
-                    l10n.pending,
-                    style: const TextStyle(
-                      color: Colors.orange,
-                      fontSize: 10,
-                      fontWeight: FontWeight.w600,
+                    decoration: BoxDecoration(
+                      color: Colors.orange.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(
+                        AppConstants.largeBorderRadius,
+                      ),
                     ),
+                    child: Text(
+                      l10n.pending,
+                      style: const TextStyle(
+                        color: Colors.orange,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w600,
+                      ),
                       overflow: TextOverflow.ellipsis,
                       maxLines: 1,
+                    ),
                   ),
-                ),
-              ],
+                ],
               ),
             ),
             onTap: () {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => PaymentApprovalScreen(
-                    initialPaymentId: payment.id,
-                  ),
+                  builder: (context) =>
+                      PaymentApprovalScreen(initialPaymentId: payment.id),
                 ),
               );
             },
@@ -525,10 +539,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
   Widget _buildQuickActionsSection(AppLocalizations l10n, ThemeData theme) {
     final screenWidth = MediaQuery.of(context).size.width;
-    final crossAxisCount = screenWidth > AppConstants.tabletBreakpoint 
-        ? AppConstants.gridCrossAxisCountTablet 
+    final crossAxisCount = screenWidth > AppConstants.tabletBreakpoint
+        ? AppConstants.gridCrossAxisCountTablet
         : AppConstants.gridCrossAxisCountMobile;
-    
+
     return Card(
       elevation: AppConstants.cardElevation,
       margin: EdgeInsets.zero,
@@ -548,7 +562,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               crossAxisCount: crossAxisCount,
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
-              childAspectRatio: screenWidth > AppConstants.tabletBreakpoint ? 3.0 : 2.8,
+              childAspectRatio: screenWidth > AppConstants.tabletBreakpoint
+                  ? 3.0
+                  : 2.8,
               crossAxisSpacing: AppConstants.smallPadding,
               mainAxisSpacing: AppConstants.smallPadding,
               children: [
@@ -589,7 +605,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       context,
                       MaterialPageRoute(
                         builder: (context) => FeeManagementScreen(
-                          adminId: _currentAdminId ?? AppConstants.currentAdminId,
+                          adminId:
+                              _currentAdminId ?? AppConstants.currentAdminId,
                         ),
                       ),
                     );
@@ -669,13 +686,21 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         return Icons.account_balance_wallet;
       case PaymentMethod.COMBINED:
         return Icons.compare_arrows;
+      case PaymentMethod.CASHFREE_CARD:
+        return Icons.credit_card;
+      case PaymentMethod.CASHFREE_UPI:
+        return Icons.account_balance;
+      case PaymentMethod.CASHFREE_NETBANKING:
+        return Icons.account_balance_outlined;
+      case PaymentMethod.CASHFREE_WALLET:
+        return Icons.wallet;
     }
   }
 
   String _formatDate(DateTime date) {
     final now = DateTime.now();
     final difference = now.difference(date);
-    
+
     if (difference.inDays == 0) {
       return AppConstants.today;
     } else if (difference.inDays == 1) {

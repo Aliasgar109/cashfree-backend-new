@@ -1,21 +1,22 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 /// Supabase configuration for TV Subscription Payment App
 class SupabaseConfig {
-  // Supabase project credentials
-  static const String supabaseUrl = 'https://lqplvvcabvqisxowmsrw.supabase.co';
-  static const String supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxxcGx2dmNhYnZxaXN4b3dtc3J3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU0MzI3MDYsImV4cCI6MjA3MTAwODcwNn0.JaT4iAfdPZsdd93pO-0WBZwln9bQewixBws9OiEmmoU';
+  // Supabase project credentials from environment variables
+  static String get supabaseUrl => dotenv.env['SUPABASE_URL'] ?? 'https://rsaylanpqnenfecsevoj.supabase.co';
+  static String get supabaseAnonKey => dotenv.env['SUPABASE_ANON_KEY'] ?? 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJzYXlsYW5wcW5lbmZlY3Nldm9qIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU4NjgwMzQsImV4cCI6MjA3MTQ0NDAzNH0.20znyBUCdLBifOrFsAEMe_SU3d2C_BFjE7vjtCLdFHs';
   
   // Service role key for admin operations (bypasses RLS)
   // ⚠️ NEVER expose this in client apps! Only use server-side or for admin operations
-  static const String supabaseServiceKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxxcGx2dmNhYnZxaXN4b3dtc3J3Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NTQzMjcwNiwiZXhwIjoyMDcxMDA4NzA2fQ.5kSQ2B96Qx9ulxgFx4DX8orAfJHff3yiddUCwA4wsS4';
+  static String get supabaseServiceKey => dotenv.env['SUPABASE_SERVICE_ROLE_KEY'] ?? 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJzYXlsYW5wcW5lbmZlY3Nldm9qIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NTg2ODAzNCwiZXhwIjoyMDcxNDQ0MDM0fQ.uqT2vjCeDMl1kLSZ8V6dQdS5MGiV6e3TICLw7OtJK-k';
   
   /// Initialize Supabase
   static Future<void> initialize() async {
     await Supabase.initialize(
       url: supabaseUrl,
       anonKey: supabaseAnonKey,
-      debug: true, // Set to false in production
+      debug: dotenv.env['DEBUG_MODE'] == 'true', // Set to false in production
     );
   }
   

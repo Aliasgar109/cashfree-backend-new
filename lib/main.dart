@@ -1,19 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'screens/screens.dart';
 import 'theme/theme.dart';
 import 'l10n/app_localizations.dart';
 import 'config/supabase_config.dart';
 import 'services/localization_service.dart';
+import 'services/cashfree_config_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Load environment variables
+  await dotenv.load(fileName: ".env");
 
   // Initialize Firebase
   await Firebase.initializeApp();
   
   // Initialize Supabase
   await SupabaseConfig.initialize();
+  
+  // Initialize Cashfree configuration
+  await CashfreeConfigService.instance.initialize();
 
   runApp(const TVSubscriptionApp());
 }

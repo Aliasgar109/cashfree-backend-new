@@ -212,6 +212,48 @@ class ReceiptTemplate {
                         ],
                       ),
                     ],
+                    
+                    // Cashfree-specific payment details
+                    if (payment.cashfreeOrderId != null) ...[
+                      pw.SizedBox(height: 5),
+                      pw.Row(
+                        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                        children: [
+                          pw.Text('Cashfree Order ID:', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+                          pw.Text(payment.cashfreeOrderId!),
+                        ],
+                      ),
+                    ],
+                    if (payment.cashfreePaymentId != null) ...[
+                      pw.SizedBox(height: 5),
+                      pw.Row(
+                        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                        children: [
+                          pw.Text('Cashfree Payment ID:', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+                          pw.Text(payment.cashfreePaymentId!),
+                        ],
+                      ),
+                    ],
+                    if (payment.paymentGateway != null) ...[
+                      pw.SizedBox(height: 5),
+                      pw.Row(
+                        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                        children: [
+                          pw.Text('Payment Gateway:', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+                          pw.Text(payment.paymentGateway!),
+                        ],
+                      ),
+                    ],
+                    if (payment.bankReference != null) ...[
+                      pw.SizedBox(height: 5),
+                      pw.Row(
+                        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                        children: [
+                          pw.Text('Bank Reference:', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+                          pw.Text(payment.bankReference!),
+                        ],
+                      ),
+                    ],
                     pw.SizedBox(height: 5),
                                          pw.Row(
                        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
@@ -461,6 +503,48 @@ class ReceiptTemplate {
                         ],
                       ),
                     ],
+                    
+                    // Cashfree-specific payment details in Gujarati
+                    if (payment.cashfreeOrderId != null) ...[
+                      pw.SizedBox(height: 5),
+                      pw.Row(
+                        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                        children: [
+                          pw.Text('કેશફ્રી ઓર્ડર આઈડી:', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+                          pw.Text(payment.cashfreeOrderId!),
+                        ],
+                      ),
+                    ],
+                    if (payment.cashfreePaymentId != null) ...[
+                      pw.SizedBox(height: 5),
+                      pw.Row(
+                        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                        children: [
+                          pw.Text('કેશફ્રી પેમેન્ટ આઈડી:', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+                          pw.Text(payment.cashfreePaymentId!),
+                        ],
+                      ),
+                    ],
+                    if (payment.paymentGateway != null) ...[
+                      pw.SizedBox(height: 5),
+                      pw.Row(
+                        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                        children: [
+                          pw.Text('પેમેન્ટ ગેટવે:', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+                          pw.Text(payment.paymentGateway!),
+                        ],
+                      ),
+                    ],
+                    if (payment.bankReference != null) ...[
+                      pw.SizedBox(height: 5),
+                      pw.Row(
+                        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                        children: [
+                          pw.Text('બેંક રેફરન્સ:', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+                          pw.Text(payment.bankReference!),
+                        ],
+                      ),
+                    ],
                     pw.SizedBox(height: 5),
                     pw.Row(
                       mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
@@ -555,6 +639,14 @@ class ReceiptTemplate {
         return 'Cash Payment';
       case 'combined':
         return 'Combined Payment';
+      case 'cashfree_card':
+        return 'Card Payment (Cashfree)';
+      case 'cashfree_upi':
+        return 'UPI Payment (Cashfree)';
+      case 'cashfree_netbanking':
+        return 'Net Banking (Cashfree)';
+      case 'cashfree_wallet':
+        return 'Wallet Payment (Cashfree)';
       default:
         return method;
     }

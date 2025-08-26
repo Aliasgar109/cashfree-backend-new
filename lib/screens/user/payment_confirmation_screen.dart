@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../models/payment_model.dart';
 import '../../services/supabase_payment_service.dart';
-import '../../theme/theme.dart';
+
 import 'payment_status_screen.dart';
 import 'payment_history_screen.dart';
 
@@ -160,6 +160,22 @@ class _PaymentConfirmationScreenState extends State<PaymentConfirmationScreen> {
         message = 'Cash Payment Recorded';
         subtitle = 'Your cash payment has been recorded';
         break;
+      case PaymentMethod.CASHFREE_CARD:
+        message = 'Card Payment Initiated';
+        subtitle = 'Your card payment is being processed securely';
+        break;
+      case PaymentMethod.CASHFREE_UPI:
+        message = 'UPI Payment Initiated';
+        subtitle = 'Your UPI payment is being processed';
+        break;
+      case PaymentMethod.CASHFREE_NETBANKING:
+        message = 'Net Banking Payment Initiated';
+        subtitle = 'Your net banking payment is being processed';
+        break;
+      case PaymentMethod.CASHFREE_WALLET:
+        message = 'Wallet Payment Initiated';
+        subtitle = 'Your digital wallet payment is being processed';
+        break;
     }
 
     return Column(
@@ -275,7 +291,7 @@ class _PaymentConfirmationScreenState extends State<PaymentConfirmationScreen> {
     }
 
     return Card(
-      color: statusColor.withOpacity(0.1),
+      color: statusColor.withValues(alpha: 0.1),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Row(

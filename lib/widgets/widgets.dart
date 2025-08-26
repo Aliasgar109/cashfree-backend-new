@@ -7,7 +7,9 @@
 // export 'common/loading_indicator.dart';
 
 // Payment widgets
-// export 'payment/payment_method_selector.dart';
+export 'cashfree_payment_method_selector.dart';
+export 'payment_amount_display.dart';
+export 'payment_confirmation_dialog.dart';
 // export 'payment/payment_status_card.dart';
 
 // User widgets
@@ -17,3 +19,6 @@
 // Admin widgets
 // export 'admin/pending_payment_card.dart';
 // export 'admin/user_management_card.dart';
+
+// Language selector
+export 'language_selector.dart';

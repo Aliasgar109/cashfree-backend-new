@@ -3,9 +3,13 @@ import 'package:flutter/services.dart';
 import '../../models/payment_model.dart';
 import '../../services/supabase_payment_service.dart';
 import '../../services/supabase_wallet_service.dart';
+import '../../services/cashfree_payment_service.dart';
 import '../../services/auth_service.dart';
-import '../../theme/theme.dart';
+import '../../widgets/cashfree_payment_method_selector.dart';
+import '../../widgets/payment_amount_display.dart';
+import '../../widgets/payment_confirmation_dialog.dart';
 import 'payment_confirmation_screen.dart';
+
 
 class PayNowScreen extends StatefulWidget {
   const PayNowScreen({super.key});
@@ -18,6 +22,7 @@ class _PayNowScreenState extends State<PayNowScreen> {
   final _formKey = GlobalKey<FormState>();
   final SupabasePaymentService _paymentService = SupabasePaymentService();
   final SupabaseWalletService _walletService = SupabaseWalletService();
+  final CashfreePaymentService _cashfreeService = CashfreePaymentService.instance;
   final AuthService _authService = AuthService();
 
   // Form controllers
@@ -29,7 +34,7 @@ class _PayNowScreenState extends State<PayNowScreen> {
   bool _isProcessing = false;
   FeeCalculation? _feeCalculation;
   double _walletBalance = 0.0;
-  PaymentMethod _selectedMethod = PaymentMethod.UPI;
+  PaymentMethod _selectedMethod = PaymentMethod.CASHFREE_UPI;
 
   // Form validation
   String? _nameError;
@@ -133,6 +138,10 @@ class _PayNowScreenState extends State<PayNowScreen> {
   Future<void> _processPayment() async {
     if (!_canProceed) return;
 
+    // Show confirmation dialog first
+    final confirmed = await _showPaymentConfirmationDialog();
+    if (!confirmed) return;
+
     try {
       setState(() => _isProcessing = true);
 
@@ -145,36 +154,51 @@ class _PayNowScreenState extends State<PayNowScreen> {
 
       dynamic result;
 
-      switch (_selectedMethod) {
-        case PaymentMethod.UPI:
-          result = await _paymentService.processUPIPayment(
-            userId: user.uid,
-            amount: totalAmount,
-            extraCharges: 0.0,
-            note: 'TV Subscription Payment ${DateTime.now().year}',
-          );
-          break;
+      // Check if it's a Cashfree payment method
+      if (_isCashfreePaymentMethod(_selectedMethod)) {
+        result = await _cashfreeService.processPaymentWithErrorHandling(
+          userId: user.uid,
+          amount: totalAmount,
+          method: _selectedMethod,
+          extraCharges: 0.0,
+          note: 'TV Subscription Payment ${DateTime.now().year}',
+        );
+      } else {
+        // Handle legacy payment methods
+        switch (_selectedMethod) {
+          case PaymentMethod.UPI:
+            result = await _paymentService.processUPIPayment(
+              userId: user.uid,
+              amount: totalAmount,
+              extraCharges: 0.0,
+              note: 'TV Subscription Payment ${DateTime.now().year}',
+            );
+            break;
 
-        case PaymentMethod.WALLET:
-          result = await _paymentService.processWalletPayment(
-            userId: user.uid,
-            amount: totalAmount,
-            extraCharges: 0.0,
-            note: 'TV Subscription Payment ${DateTime.now().year}',
-          );
-          break;
+          case PaymentMethod.WALLET:
+            result = await _paymentService.processWalletPayment(
+              userId: user.uid,
+              amount: totalAmount,
+              extraCharges: 0.0,
+              note: 'TV Subscription Payment ${DateTime.now().year}',
+            );
+            break;
 
-        case PaymentMethod.COMBINED:
-          result = await _paymentService.processCombinedPayment(
-            userId: user.uid,
-            amount: totalAmount,
-            extraCharges: 0.0,
-            note: 'TV Subscription Payment ${DateTime.now().year}',
-          );
-          break;
+          case PaymentMethod.COMBINED:
+            result = await _paymentService.processCombinedPayment(
+              userId: user.uid,
+              amount: totalAmount,
+              extraCharges: 0.0,
+              note: 'TV Subscription Payment ${DateTime.now().year}',
+            );
+            break;
 
-        case PaymentMethod.CASH:
-          throw Exception('Cash payments are not available in this screen');
+          case PaymentMethod.CASH:
+            throw Exception('Cash payments are not available in this screen');
+          
+          default:
+            throw Exception('Unsupported payment method: ${_selectedMethod.name}');
+        }
       }
 
       setState(() => _isProcessing = false);
@@ -214,6 +238,34 @@ class _PayNowScreenState extends State<PayNowScreen> {
     }
   }
 
+  bool _isCashfreePaymentMethod(PaymentMethod method) {
+    return [
+      PaymentMethod.CASHFREE_CARD,
+      PaymentMethod.CASHFREE_UPI,
+      PaymentMethod.CASHFREE_NETBANKING,
+      PaymentMethod.CASHFREE_WALLET,
+    ].contains(method);
+  }
+
+  Future<bool> _showPaymentConfirmationDialog() async {
+    final result = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => PaymentConfirmationDialog(
+        amount: _feeCalculation!.baseAmount,
+        extraCharges: _feeCalculation!.lateFees,
+        paymentMethod: _selectedMethod,
+        customerName: _nameController.text.trim(),
+        customerPhone: _mobileController.text.trim(),
+        customerArea: _areaController.text.trim(),
+        onConfirm: () => Navigator.of(context).pop(true),
+        onCancel: () => Navigator.of(context).pop(false),
+        isProcessing: false,
+      ),
+    );
+    return result ?? false;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -246,7 +298,7 @@ class _PayNowScreenState extends State<PayNowScreen> {
             const SizedBox(height: 16),
             _buildPaymentMethodSelection(),
             const SizedBox(height: 24),
-            _buildTotalAmountCard(),
+            _buildPaymentAmountDisplay(),
             const SizedBox(height: 24),
             _buildPaymentButton(),
           ],
@@ -403,97 +455,23 @@ class _PayNowScreenState extends State<PayNowScreen> {
   }
 
   Widget _buildPaymentMethodSelection() {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Payment Method',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 12),
-            _buildPaymentMethodTile(
-              PaymentMethod.UPI,
-              'UPI Payment',
-              'Pay using UPI apps like GPay, PhonePe, Paytm',
-              Icons.payment,
-            ),
-            _buildPaymentMethodTile(
-              PaymentMethod.WALLET,
-              'Wallet Payment',
-              'Pay using your wallet balance (₹${_walletBalance.toStringAsFixed(2)} available)',
-              Icons.account_balance_wallet,
-              enabled: _walletBalance >= _feeCalculation!.totalAmount,
-            ),
-            _buildPaymentMethodTile(
-              PaymentMethod.COMBINED,
-              'Wallet + UPI',
-              'Use wallet balance first, then UPI for remaining amount',
-              Icons.account_balance_wallet_outlined,
-              enabled: _walletBalance > 0,
-            ),
-          ],
-        ),
-      ),
+    return CashfreePaymentMethodSelector(
+      selectedMethod: _selectedMethod,
+      onMethodChanged: (method) => setState(() => _selectedMethod = method),
+      walletBalance: _walletBalance,
+      totalAmount: _feeCalculation!.totalAmount,
+      enabled: !_isProcessing,
     );
   }
 
-  Widget _buildPaymentMethodTile(
-    PaymentMethod method,
-    String title,
-    String subtitle,
-    IconData icon, {
-    bool enabled = true,
-  }) {
-    return RadioListTile<PaymentMethod>(
-      value: method,
-      groupValue: _selectedMethod,
-      onChanged: enabled
-          ? (value) => setState(() => _selectedMethod = value!)
-          : null,
-      title: Text(
-        title,
-        style: TextStyle(
-          color: enabled ? null : Colors.grey,
-          fontWeight: FontWeight.w500,
-        ),
-      ),
-      subtitle: Text(
-        subtitle,
-        style: TextStyle(
-          color: enabled ? Colors.grey[600] : Colors.grey[400],
-          fontSize: 12,
-        ),
-      ),
-      secondary: Icon(icon, color: enabled ? Colors.blue : Colors.grey),
-    );
-  }
 
-  Widget _buildTotalAmountCard() {
-    return Card(
-      color: Colors.blue[50],
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            const Text(
-              'Total Amount',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
-            Text(
-              '₹${_feeCalculation!.totalAmount.toStringAsFixed(2)}',
-              style: const TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: Colors.blue,
-              ),
-            ),
-          ],
-        ),
-      ),
+
+  Widget _buildPaymentAmountDisplay() {
+    return PaymentAmountDisplay(
+      baseAmount: _feeCalculation!.baseAmount,
+      extraCharges: 0.0,
+      lateFees: _feeCalculation!.lateFees,
+      showBreakdown: _feeCalculation!.lateFees > 0,
     );
   }
 

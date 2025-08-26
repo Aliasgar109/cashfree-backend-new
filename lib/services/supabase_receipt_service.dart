@@ -243,6 +243,17 @@ class SupabaseReceiptService extends SupabaseService {
                     pw.Text('Payment Method: ${payment.paymentMethod}'),
                     if (payment.upiTransactionId != null)
                       pw.Text('UPI Transaction ID: ${payment.upiTransactionId}'),
+                    
+                    // Cashfree-specific payment details
+                    if (payment.cashfreeOrderId != null)
+                      pw.Text('Cashfree Order ID: ${payment.cashfreeOrderId}'),
+                    if (payment.cashfreePaymentId != null)
+                      pw.Text('Cashfree Payment ID: ${payment.cashfreePaymentId}'),
+                    if (payment.paymentGateway != null)
+                      pw.Text('Payment Gateway: ${payment.paymentGateway}'),
+                    if (payment.bankReference != null)
+                      pw.Text('Bank Reference: ${payment.bankReference}'),
+                    
                     pw.Text('Payment Date: ${_formatDate(payment.paidAt ?? payment.createdAt)}'),
                   ],
                 ),

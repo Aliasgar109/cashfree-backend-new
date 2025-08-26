@@ -246,6 +246,26 @@ class ReceiptService {
           pw.Text(
             '${content['paymentMethod']!}: ${_getPaymentMethodText(payment.method, content['locale']!)}',
           ),
+          
+          // Cashfree-specific payment details
+          if (payment.cashfreeOrderId != null) ...[
+            pw.SizedBox(height: 5),
+            pw.Text('${content['cashfreeOrderId']!}: ${payment.cashfreeOrderId}'),
+          ],
+          if (payment.cashfreePaymentId != null) ...[
+            pw.SizedBox(height: 5),
+            pw.Text('${content['cashfreePaymentId']!}: ${payment.cashfreePaymentId}'),
+          ],
+          if (payment.paymentGateway != null) ...[
+            pw.SizedBox(height: 5),
+            pw.Text('${content['paymentGateway']!}: ${payment.paymentGateway}'),
+          ],
+          if (payment.bankReference != null) ...[
+            pw.SizedBox(height: 5),
+            pw.Text('${content['bankReference']!}: ${payment.bankReference}'),
+          ],
+          
+          // Traditional payment details
           if (payment.transactionId != null) ...[
             pw.SizedBox(height: 5),
             pw.Text('${content['transactionId']!}: ${payment.transactionId}'),
@@ -378,6 +398,10 @@ class ReceiptService {
         'paymentDetails': 'ચુકવણી વિગતો',
         'paymentMethod': 'ચુકવણી પદ્ધતિ',
         'transactionId': 'ટ્રાન્ઝેક્શન આઈડી',
+        'cashfreeOrderId': 'કેશફ્રી ઓર્ડર આઈડી',
+        'cashfreePaymentId': 'કેશફ્રી પેમેન્ટ આઈડી',
+        'paymentGateway': 'પેમેન્ટ ગેટવે',
+        'bankReference': 'બેંક રેફરન્સ',
         'walletAmountUsed': 'વૉલેટ રકમ વપરાયેલ',
         'upiAmountPaid': 'UPI રકમ ચૂકવેલ',
         'amountBreakdown': 'રકમ વિભાજન',
@@ -406,6 +430,10 @@ class ReceiptService {
         'paymentDetails': 'Payment Details',
         'paymentMethod': 'Payment Method',
         'transactionId': 'Transaction ID',
+        'cashfreeOrderId': 'Cashfree Order ID',
+        'cashfreePaymentId': 'Cashfree Payment ID',
+        'paymentGateway': 'Payment Gateway',
+        'bankReference': 'Bank Reference',
         'walletAmountUsed': 'Wallet Amount Used',
         'upiAmountPaid': 'UPI Amount Paid',
         'amountBreakdown': 'Amount Breakdown',
@@ -498,6 +526,14 @@ class ReceiptService {
           return 'વૉલેટ ચુકવણી';
         case PaymentMethod.COMBINED:
           return 'વૉલેટ + UPI';
+        case PaymentMethod.CASHFREE_CARD:
+          return 'કાર્ડ ચુકવણી (કેશફ્રી)';
+        case PaymentMethod.CASHFREE_UPI:
+          return 'UPI ચુકવણી (કેશફ્રી)';
+        case PaymentMethod.CASHFREE_NETBANKING:
+          return 'નેટ બેંકિંગ (કેશફ્રી)';
+        case PaymentMethod.CASHFREE_WALLET:
+          return 'વૉલેટ ચુકવણી (કેશફ્રી)';
       }
     } else {
       switch (method) {
@@ -509,6 +545,14 @@ class ReceiptService {
           return 'Wallet Payment';
         case PaymentMethod.COMBINED:
           return 'Wallet + UPI';
+        case PaymentMethod.CASHFREE_CARD:
+          return 'Card Payment (Cashfree)';
+        case PaymentMethod.CASHFREE_UPI:
+          return 'UPI Payment (Cashfree)';
+        case PaymentMethod.CASHFREE_NETBANKING:
+          return 'Net Banking (Cashfree)';
+        case PaymentMethod.CASHFREE_WALLET:
+          return 'Wallet Payment (Cashfree)';
       }
     }
   }
@@ -551,6 +595,12 @@ class ReceiptService {
     required double extraCharges,
     required String paymentMethod,
     required int year,
+    String? cashfreeOrderId,
+    String? cashfreePaymentId,
+    String? cashfreeSessionId,
+    String? paymentGateway,
+    String? bankReference,
+    Map<String, dynamic>? gatewayResponse,
   }) async {
     try {
       final receiptData = {
@@ -564,6 +614,12 @@ class ReceiptService {
         'extraCharges': extraCharges,
         'paymentMethod': paymentMethod,
         'year': year,
+        'cashfreeOrderId': cashfreeOrderId,
+        'cashfreePaymentId': cashfreePaymentId,
+        'cashfreeSessionId': cashfreeSessionId,
+        'paymentGateway': paymentGateway,
+        'bankReference': bankReference,
+        'gatewayResponse': gatewayResponse,
       };
 
       final docRef = await _firestore.collection('receipts').add(receiptData);
@@ -580,6 +636,12 @@ class ReceiptService {
         extraCharges: extraCharges,
         paymentMethod: paymentMethod,
         year: year,
+        cashfreeOrderId: cashfreeOrderId,
+        cashfreePaymentId: cashfreePaymentId,
+        cashfreeSessionId: cashfreeSessionId,
+        paymentGateway: paymentGateway,
+        bankReference: bankReference,
+        gatewayResponse: gatewayResponse,
       );
     } catch (e) {
       throw Exception('Failed to save receipt to Firestore: $e');
@@ -606,7 +668,7 @@ class ReceiptService {
       // Upload to Firebase Storage
       final pdfUrl = await uploadReceiptToStorage(pdfBytes, receiptNumber);
 
-      // Save to Firestore
+      // Save to Firestore with Cashfree data
       final receipt = await saveReceiptToFirestore(
         paymentId: payment.id,
         receiptNumber: receiptNumber,
@@ -617,6 +679,12 @@ class ReceiptService {
         extraCharges: payment.extraCharges,
         paymentMethod: payment.method.toString().split('.').last,
         year: payment.year,
+        cashfreeOrderId: payment.cashfreeOrderId,
+        cashfreePaymentId: payment.cashfreePaymentId,
+        cashfreeSessionId: payment.cashfreeSessionId,
+        paymentGateway: payment.paymentGateway,
+        bankReference: payment.bankReference,
+        gatewayResponse: payment.gatewayResponse,
       );
 
       return receipt;

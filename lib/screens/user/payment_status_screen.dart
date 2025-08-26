@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../models/payment_model.dart';
 import '../../services/supabase_payment_service.dart';
-import '../../theme/theme.dart';
+
 
 class PaymentStatusScreen extends StatefulWidget {
   final String paymentId;

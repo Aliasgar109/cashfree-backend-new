@@ -15,6 +15,8 @@ export 'localization_service.dart';
 export 'payment_service.dart';
 export 'wallet_service.dart';
 export 'upi_intent_service.dart';
+export 'cashfree_config_service.dart';
+export 'supabase_cashfree_service.dart';
 
 // Receipt and notification services
 export 'receipt_service.dart';

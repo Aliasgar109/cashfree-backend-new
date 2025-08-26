@@ -12,6 +12,14 @@ class ReceiptModel {
   final double extraCharges;
   final String paymentMethod;
   final int year;
+  
+  // Cashfree-specific fields
+  final String? cashfreeOrderId;
+  final String? cashfreePaymentId;
+  final String? cashfreeSessionId;
+  final String? paymentGateway;
+  final String? bankReference;
+  final Map<String, dynamic>? gatewayResponse;
 
   ReceiptModel({
     required this.id,
@@ -25,6 +33,12 @@ class ReceiptModel {
     this.extraCharges = 0.0,
     required this.paymentMethod,
     required this.year,
+    this.cashfreeOrderId,
+    this.cashfreePaymentId,
+    this.cashfreeSessionId,
+    this.paymentGateway,
+    this.bankReference,
+    this.gatewayResponse,
   });
 
   // Validation methods
@@ -96,7 +110,16 @@ class ReceiptModel {
   }
 
   static String? validatePaymentMethod(String? paymentMethod) {
-    const validMethods = ['UPI', 'CASH', 'WALLET', 'COMBINED'];
+    const validMethods = [
+      'UPI', 
+      'CASH', 
+      'WALLET', 
+      'COMBINED',
+      'CASHFREE_CARD',
+      'CASHFREE_UPI',
+      'CASHFREE_NETBANKING',
+      'CASHFREE_WALLET'
+    ];
     if (paymentMethod == null || !validMethods.contains(paymentMethod)) {
       return 'Invalid payment method';
     }
@@ -110,6 +133,44 @@ class ReceiptModel {
     final currentYear = DateTime.now().year;
     if (year < 2020 || year > currentYear + 1) {
       return 'Invalid year selection';
+    }
+    return null;
+  }
+
+  // Cashfree-specific validation methods
+  static String? validateCashfreeOrderId(String? orderId) {
+    if (orderId == null || orderId.trim().isEmpty) {
+      return null; // Optional field
+    }
+    if (orderId.trim().length < 3) {
+      return 'Cashfree order ID must be at least 3 characters';
+    }
+    if (orderId.trim().length > 50) {
+      return 'Cashfree order ID must be less than 50 characters';
+    }
+    return null;
+  }
+
+  static String? validateCashfreePaymentId(String? paymentId) {
+    if (paymentId == null || paymentId.trim().isEmpty) {
+      return null; // Optional field
+    }
+    if (paymentId.trim().length < 10) {
+      return 'Cashfree payment ID must be at least 10 characters';
+    }
+    if (paymentId.trim().length > 100) {
+      return 'Cashfree payment ID must be less than 100 characters';
+    }
+    return null;
+  }
+
+  static String? validatePaymentGateway(String? gateway) {
+    if (gateway == null || gateway.trim().isEmpty) {
+      return null; // Optional field
+    }
+    final validGateways = ['cashfree', 'razorpay', 'payu', 'stripe'];
+    if (!validGateways.contains(gateway.toLowerCase())) {
+      return 'Invalid payment gateway';
     }
     return null;
   }
@@ -145,6 +206,16 @@ class ReceiptModel {
     final yearError = validateYear(year);
     if (yearError != null) errors['year'] = yearError;
     
+    // Validate Cashfree-specific fields
+    final cashfreeOrderIdError = validateCashfreeOrderId(cashfreeOrderId);
+    if (cashfreeOrderIdError != null) errors['cashfreeOrderId'] = cashfreeOrderIdError;
+    
+    final cashfreePaymentIdError = validateCashfreePaymentId(cashfreePaymentId);
+    if (cashfreePaymentIdError != null) errors['cashfreePaymentId'] = cashfreePaymentIdError;
+    
+    final paymentGatewayError = validatePaymentGateway(paymentGateway);
+    if (paymentGatewayError != null) errors['paymentGateway'] = paymentGatewayError;
+    
     return errors;
   }
 
@@ -176,10 +247,28 @@ class ReceiptModel {
         return 'Wallet Payment';
       case 'COMBINED':
         return 'Wallet + UPI';
+      case 'CASHFREE_CARD':
+        return 'Card Payment (Cashfree)';
+      case 'CASHFREE_UPI':
+        return 'UPI Payment (Cashfree)';
+      case 'CASHFREE_NETBANKING':
+        return 'Net Banking (Cashfree)';
+      case 'CASHFREE_WALLET':
+        return 'Wallet Payment (Cashfree)';
       default:
         return paymentMethod;
     }
   }
+
+  // Cashfree-specific computed properties
+  bool get isCashfreePayment => paymentGateway?.toLowerCase() == 'cashfree' || 
+      paymentMethod.startsWith('CASHFREE_');
+  
+  bool get hasCashfreeData => cashfreeOrderId != null || 
+      cashfreePaymentId != null || 
+      cashfreeSessionId != null;
+  
+  String? get primaryTransactionId => cashfreePaymentId ?? cashfreeOrderId;
 
   // Generate a unique receipt number
   static String generateReceiptNumber(int year, int sequenceNumber) {
@@ -219,6 +308,14 @@ class ReceiptModel {
       extraCharges: (data['extraCharges'] ?? 0.0).toDouble(),
       paymentMethod: data['paymentMethod'] ?? '',
       year: data['year'] ?? DateTime.now().year,
+      cashfreeOrderId: data['cashfreeOrderId'],
+      cashfreePaymentId: data['cashfreePaymentId'],
+      cashfreeSessionId: data['cashfreeSessionId'],
+      paymentGateway: data['paymentGateway'],
+      bankReference: data['bankReference'],
+      gatewayResponse: data['gatewayResponse'] != null 
+          ? Map<String, dynamic>.from(data['gatewayResponse'])
+          : null,
     );
   }
 
@@ -235,6 +332,12 @@ class ReceiptModel {
       'extraCharges': extraCharges,
       'paymentMethod': paymentMethod,
       'year': year,
+      'cashfreeOrderId': cashfreeOrderId,
+      'cashfreePaymentId': cashfreePaymentId,
+      'cashfreeSessionId': cashfreeSessionId,
+      'paymentGateway': paymentGateway,
+      'bankReference': bankReference,
+      'gatewayResponse': gatewayResponse,
     };
   }
 
@@ -252,6 +355,14 @@ class ReceiptModel {
       extraCharges: (data['extra_charges'] ?? 0.0).toDouble(),
       paymentMethod: data['payment_method'] ?? '',
       year: data['year'] ?? DateTime.now().year,
+      cashfreeOrderId: data['cashfree_order_id'],
+      cashfreePaymentId: data['cashfree_payment_id'],
+      cashfreeSessionId: data['cashfree_session_id'],
+      paymentGateway: data['payment_gateway'],
+      bankReference: data['bank_reference'],
+      gatewayResponse: data['gateway_response'] != null 
+          ? Map<String, dynamic>.from(data['gateway_response'])
+          : null,
     );
   }
 

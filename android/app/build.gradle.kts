@@ -25,7 +25,7 @@ android {
         applicationId = "com.example.tv_subscription_app"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = 23  // Required for Firebase
+        minSdk = 21  // Required for Cashfree SDK compatibility
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName

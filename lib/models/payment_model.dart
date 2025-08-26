@@ -1,6 +1,15 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-enum PaymentMethod { UPI, CASH, WALLET, COMBINED }
+enum PaymentMethod { 
+  UPI, 
+  CASH, 
+  WALLET, 
+  COMBINED,
+  CASHFREE_CARD,
+  CASHFREE_UPI,
+  CASHFREE_NETBANKING,
+  CASHFREE_WALLET
+}
 
 enum PaymentStatus { PENDING, APPROVED, REJECTED, INCOMPLETE }
 
@@ -28,6 +37,14 @@ class PaymentModel {
   final String? upiTransactionId;
   final DateTime? paidAt;
   final String? userFirebaseUid;
+  
+  // Cashfree-specific fields
+  final String? cashfreeOrderId;
+  final String? cashfreePaymentId;
+  final String? cashfreeSessionId;
+  final String? paymentGateway;
+  final String? bankReference;
+  final Map<String, dynamic>? gatewayResponse;
 
   PaymentModel({
     required this.id,
@@ -53,6 +70,12 @@ class PaymentModel {
     this.upiTransactionId,
     this.paidAt,
     this.userFirebaseUid,
+    this.cashfreeOrderId,
+    this.cashfreePaymentId,
+    this.cashfreeSessionId,
+    this.paymentGateway,
+    this.bankReference,
+    this.gatewayResponse,
   });
 
   // Validation methods
@@ -127,6 +150,109 @@ class PaymentModel {
     return null;
   }
 
+  // Cashfree-specific validation methods
+  static String? validateCashfreeOrderId(String? orderId) {
+    if (orderId == null || orderId.trim().isEmpty) {
+      return null; // Optional field
+    }
+    if (orderId.trim().length < 3) {
+      return 'Cashfree order ID must be at least 3 characters';
+    }
+    if (orderId.trim().length > 50) {
+      return 'Cashfree order ID must be less than 50 characters';
+    }
+    // Allow alphanumeric characters, hyphens, and underscores
+    final orderIdRegex = RegExp(r'^[a-zA-Z0-9_-]+$');
+    if (!orderIdRegex.hasMatch(orderId.trim())) {
+      return 'Cashfree order ID can only contain letters, numbers, hyphens, and underscores';
+    }
+    return null;
+  }
+
+  static String? validateCashfreePaymentId(String? paymentId) {
+    if (paymentId == null || paymentId.trim().isEmpty) {
+      return null; // Optional field
+    }
+    if (paymentId.trim().length < 10) {
+      return 'Cashfree payment ID must be at least 10 characters';
+    }
+    if (paymentId.trim().length > 100) {
+      return 'Cashfree payment ID must be less than 100 characters';
+    }
+    return null;
+  }
+
+  static String? validateCashfreeSessionId(String? sessionId) {
+    if (sessionId == null || sessionId.trim().isEmpty) {
+      return null; // Optional field
+    }
+    if (sessionId.trim().length < 10) {
+      return 'Cashfree session ID must be at least 10 characters';
+    }
+    if (sessionId.trim().length > 200) {
+      return 'Cashfree session ID must be less than 200 characters';
+    }
+    return null;
+  }
+
+  static String? validatePaymentGateway(String? gateway) {
+    if (gateway == null || gateway.trim().isEmpty) {
+      return null; // Optional field
+    }
+    final validGateways = ['cashfree', 'razorpay', 'payu', 'stripe'];
+    if (!validGateways.contains(gateway.toLowerCase())) {
+      return 'Invalid payment gateway';
+    }
+    return null;
+  }
+
+  static String? validateBankReference(String? bankReference) {
+    if (bankReference == null || bankReference.trim().isEmpty) {
+      return null; // Optional field
+    }
+    if (bankReference.trim().length < 5) {
+      return 'Bank reference must be at least 5 characters';
+    }
+    if (bankReference.trim().length > 100) {
+      return 'Bank reference must be less than 100 characters';
+    }
+    return null;
+  }
+
+  static String? validateGatewayResponse(Map<String, dynamic>? gatewayResponse) {
+    if (gatewayResponse == null || gatewayResponse.isEmpty) {
+      return null; // Optional field
+    }
+    // Basic validation - ensure it's a valid map structure
+    try {
+      // Check if the map can be serialized (basic validation)
+      gatewayResponse.toString();
+      return null;
+    } catch (e) {
+      return 'Invalid gateway response format';
+    }
+  }
+
+  // Validation for Cashfree payment methods
+  static String? validateCashfreePaymentMethod(PaymentMethod method, String? cashfreeOrderId, String? cashfreeSessionId) {
+    final cashfreeMethods = [
+      PaymentMethod.CASHFREE_CARD,
+      PaymentMethod.CASHFREE_UPI,
+      PaymentMethod.CASHFREE_NETBANKING,
+      PaymentMethod.CASHFREE_WALLET
+    ];
+    
+    if (cashfreeMethods.contains(method)) {
+      if (cashfreeOrderId == null || cashfreeOrderId.trim().isEmpty) {
+        return 'Cashfree order ID is required for Cashfree payment methods';
+      }
+      if (cashfreeSessionId == null || cashfreeSessionId.trim().isEmpty) {
+        return 'Cashfree session ID is required for Cashfree payment methods';
+      }
+    }
+    return null;
+  }
+
   // Validation for the entire payment model
   Map<String, String> validate() {
     final errors = <String, String>{};
@@ -148,6 +274,28 @@ class PaymentModel {
     
     final receiptError = validateReceiptNumber(receiptNumber);
     if (receiptError != null) errors['receiptNumber'] = receiptError;
+    
+    // Validate Cashfree-specific fields
+    final cashfreeOrderIdError = validateCashfreeOrderId(cashfreeOrderId);
+    if (cashfreeOrderIdError != null) errors['cashfreeOrderId'] = cashfreeOrderIdError;
+    
+    final cashfreePaymentIdError = validateCashfreePaymentId(cashfreePaymentId);
+    if (cashfreePaymentIdError != null) errors['cashfreePaymentId'] = cashfreePaymentIdError;
+    
+    final cashfreeSessionIdError = validateCashfreeSessionId(cashfreeSessionId);
+    if (cashfreeSessionIdError != null) errors['cashfreeSessionId'] = cashfreeSessionIdError;
+    
+    final paymentGatewayError = validatePaymentGateway(paymentGateway);
+    if (paymentGatewayError != null) errors['paymentGateway'] = paymentGatewayError;
+    
+    final bankReferenceError = validateBankReference(bankReference);
+    if (bankReferenceError != null) errors['bankReference'] = bankReferenceError;
+    
+    final gatewayResponseError = validateGatewayResponse(gatewayResponse);
+    if (gatewayResponseError != null) errors['gatewayResponse'] = gatewayResponseError;
+    
+    final cashfreeMethodError = validateCashfreePaymentMethod(method, cashfreeOrderId, cashfreeSessionId);
+    if (cashfreeMethodError != null) errors['cashfreeMethod'] = cashfreeMethodError;
     
     // Validate combined payment amounts
     if (method == PaymentMethod.COMBINED) {
@@ -186,6 +334,21 @@ class PaymentModel {
   
   bool get requiresApproval => method == PaymentMethod.UPI || method == PaymentMethod.COMBINED;
   
+  // Cashfree-specific computed properties
+  bool get isCashfreePayment => [
+    PaymentMethod.CASHFREE_CARD,
+    PaymentMethod.CASHFREE_UPI,
+    PaymentMethod.CASHFREE_NETBANKING,
+    PaymentMethod.CASHFREE_WALLET
+  ].contains(method);
+  
+  bool get hasCashfreeData => cashfreeOrderId != null || cashfreePaymentId != null || cashfreeSessionId != null;
+  
+  bool get isCompleteCashfreePayment => isCashfreePayment && 
+      cashfreeOrderId != null && 
+      cashfreePaymentId != null && 
+      cashfreeSessionId != null;
+  
   String get statusDisplayText {
     switch (status) {
       case PaymentStatus.PENDING:
@@ -209,6 +372,14 @@ class PaymentModel {
         return 'Wallet Payment';
       case PaymentMethod.COMBINED:
         return 'Wallet + UPI';
+      case PaymentMethod.CASHFREE_CARD:
+        return 'Card Payment (Cashfree)';
+      case PaymentMethod.CASHFREE_UPI:
+        return 'UPI Payment (Cashfree)';
+      case PaymentMethod.CASHFREE_NETBANKING:
+        return 'Net Banking (Cashfree)';
+      case PaymentMethod.CASHFREE_WALLET:
+        return 'Wallet Payment (Cashfree)';
     }
   }
 
@@ -284,6 +455,14 @@ class PaymentModel {
           ? DateTime.parse(data['paid_at'])
           : null,
       userFirebaseUid: data['user_firebase_uid'],
+      cashfreeOrderId: data['cashfree_order_id'],
+      cashfreePaymentId: data['cashfree_payment_id'],
+      cashfreeSessionId: data['cashfree_session_id'],
+      paymentGateway: data['payment_gateway'],
+      bankReference: data['bank_reference'],
+      gatewayResponse: data['gateway_response'] != null 
+          ? Map<String, dynamic>.from(data['gateway_response'])
+          : null,
     );
   }
 
@@ -332,6 +511,12 @@ class PaymentModel {
       'upi_transaction_id': upiTransactionId,
       'paid_at': paidAt?.toIso8601String(),
       'user_firebase_uid': userFirebaseUid,
+      'cashfree_order_id': cashfreeOrderId,
+      'cashfree_payment_id': cashfreePaymentId,
+      'cashfree_session_id': cashfreeSessionId,
+      'payment_gateway': paymentGateway,
+      'bank_reference': bankReference,
+      'gateway_response': gatewayResponse,
     };
 
     // Only include id if it's not empty (for updates)
@@ -367,6 +552,12 @@ class PaymentModel {
     String? upiTransactionId,
     DateTime? paidAt,
     String? userFirebaseUid,
+    String? cashfreeOrderId,
+    String? cashfreePaymentId,
+    String? cashfreeSessionId,
+    String? paymentGateway,
+    String? bankReference,
+    Map<String, dynamic>? gatewayResponse,
   }) {
     return PaymentModel(
       id: id ?? this.id,
@@ -392,6 +583,12 @@ class PaymentModel {
       upiTransactionId: upiTransactionId ?? this.upiTransactionId,
       paidAt: paidAt ?? this.paidAt,
       userFirebaseUid: userFirebaseUid ?? this.userFirebaseUid,
+      cashfreeOrderId: cashfreeOrderId ?? this.cashfreeOrderId,
+      cashfreePaymentId: cashfreePaymentId ?? this.cashfreePaymentId,
+      cashfreeSessionId: cashfreeSessionId ?? this.cashfreeSessionId,
+      paymentGateway: paymentGateway ?? this.paymentGateway,
+      bankReference: bankReference ?? this.bankReference,
+      gatewayResponse: gatewayResponse ?? this.gatewayResponse,
     );
   }
 
@@ -422,7 +619,12 @@ class PaymentModel {
           notes == other.notes &&
           upiTransactionId == other.upiTransactionId &&
           paidAt == other.paidAt &&
-          userFirebaseUid == other.userFirebaseUid;
+          userFirebaseUid == other.userFirebaseUid &&
+          cashfreeOrderId == other.cashfreeOrderId &&
+          cashfreePaymentId == other.cashfreePaymentId &&
+          cashfreeSessionId == other.cashfreeSessionId &&
+          paymentGateway == other.paymentGateway &&
+          bankReference == other.bankReference;
 
   @override
   int get hashCode =>
@@ -448,7 +650,12 @@ class PaymentModel {
       notes.hashCode ^
       upiTransactionId.hashCode ^
       paidAt.hashCode ^
-      userFirebaseUid.hashCode;
+      userFirebaseUid.hashCode ^
+      cashfreeOrderId.hashCode ^
+      cashfreePaymentId.hashCode ^
+      cashfreeSessionId.hashCode ^
+      paymentGateway.hashCode ^
+      bankReference.hashCode;
 
   @override
   String toString() {
